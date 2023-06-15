@@ -200,6 +200,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		// 表示をエラーモードにする
 		nodes.error_area.classList.remove("hidden-element");
 		nodes.internal_values_area.classList.add("hidden-element");
+		nodes.result_area.textContent = "******";
 		// 桁数を取得する
 		const numDigits = parseInt(nodes.input_Digit.value);
 		if (isNaN(numDigits)) {
