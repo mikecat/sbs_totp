@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Step-by-Step TOTP</title>
+		<link href="index.css" rel="stylesheet">
+		<script src="sbs_totp.js"></script>
+	</head>
+	<body>
+		<h1>Step-by-Step TOTP</h1>
+		<h2>Inputs</h2>
+		<table>
+			<tr>
+				<td>K (shared secret)</td>
+				<td><input type="text" id="input_K" value="" size="128"></td>
+			</tr>
+			<tr>
+				<td>Digit (number of digits)</td>
+				<td><input type="number" id="input_Digit" value="6" min="1" max="32" size="4"></td>
+			</tr>
+			<tr>
+				<td>C (counter value)</td>
+				<td>
+					<dl>
+						<dt><input type="radio" name="HOTP_or_TOTP" id="input_HOTP" value="HOTP"><label for="input_HOTP">HOTP</label></dt>
+						<dd>
+							<table>
+								<tr>
+									<td>C (counter value)</td>
+									<td><input type="number" id="input_HOTP_C" value="0" min="0" max="18446744073709551615" size="25"></td>
+								</tr>
+							</table>
+						</dd>
+						<dt><input type="radio" name="HOTP_or_TOTP" id="input_TOTP" value="TOTP" checked><label for="input_TOTP">TOTP</label></dt>
+						<dd>
+							<table>
+								<tr>
+									<td>T0 (time to start counting)</td>
+									<td><input type="datetime-local" id="input_TOTP_T0" value="" step="1"></td>
+								</tr>
+								<tr>
+									<td>X (time step in seconds)</td>
+									<td><input type="number" id="input_TOTP_X" value="30" min="1" size="8"></td>
+								</tr>
+								<tr>
+									<td>current time</td>
+									<td>
+										<input type="datetime-local" id="input_TOTP_time" value="1970-01-01T00:00:00" step="1">
+										<input type="checkbox" id="input_TOTP_realtime" checked>
+										<label for="input_TOTP_realtime">use real time</label>
+									</td>
+								</tr>
+								<tr>
+									<td>T (number of time steps)</td>
+									<td><span id="status_TOTP_T">0</span></td>
+								</tr>
+							</table>
+						</dd>
+					</dl>
+				</td>
+			</tr>
+		</table>
+		<h2><span id="result_type">TOTP</span> Code</h2>
+		<p><span id="result_area">000000</span></p>
+		<h2>Internal values</h2>
+		<p id="error_area" class="hidden-element"></p>
+		<table id="internal_values_area">
+			<tr>
+				<td>K (Base32-decoded)</td>
+				<td id="internal_K_decode"></td>
+			</tr>
+			<tr>
+				<td>C (converted to bytes)</td>
+				<td id="internal_C_bytes"></td>
+			</tr>
+			<tr>
+				<td>HS = HMAC-SHA-1(K,C)</td>
+				<td>
+					<details>
+						<summary>Details</summary>
+						<table>
+							<tr>
+								<td>key</td>
+								<td>
+									<div id="hmac_key_hash">
+										(use H(K) because the input K is longer than 64 bytes)
+									</div>
+									<div id="hmac_key"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>K XOR ipad</td>
+								<td id="hmac_K_ipad"></td>
+							</tr>
+							<tr>
+								<td>K XOR opad</td>
+								<td id="hmac_K_opad"></td>
+							</tr>
+							<tr>
+								<td>K XOR ipad, text</td>
+								<td id="hmac_K_ipad_text"></td>
+							</tr>
+							<tr>
+								<td>H(K XOR ipad, text)</td>
+								<td id="hmac_H_K_ipad_text"></td>
+							</tr>
+							<tr>
+								<td>K XOR opad, H(K XOR ipad, text)</td>
+								<td id="hmac_before_hash"></td>
+							</tr>
+							<tr>
+								<td>H(K XOR opad, H(K XOR ipad, text))</td>
+								<td id="hmac_result"></td>
+							</tr>
+						</table>
+					</details>
+					<div id="internal_HS"></div>
+				</td>
+			</tr>
+			<tr>
+				<td>Sbits = DT(HS)</td>
+				<td>
+					<details>
+						<summary>Details</summary>
+						<table>
+							<tr>
+								<td>OffsetBits = low-order 4 bits of HS[19]</td>
+								<td id="dt_OffsetBits"></td>
+							</tr>
+							<tr>
+								<td>Offset = StToNum(OffsetBits)</td>
+								<td id="dt_Offset"></td>
+							</tr>
+							<tr>
+								<td>P = HS[OffSet]...HS[OffSet+3]</td>
+								<td id="dt_P"></td>
+							</tr>
+							<tr>
+								<td>Last 31 bits of P</td>
+								<td id="dt_P_last"></td>
+							</tr>
+						</table>
+					</details>
+					<div id="internal_DT_HS"></div>
+				</td>
+			</tr>
+			<tr>
+				<td>Snum = StToNum(Sbits)</td>
+				<td id="internal_Snum"></td>
+			</tr>
+			<tr>
+				<td>D = Snum mod 10^Digit</td>
+				<td id="internal_D"></td>
+			</tr>
+		</table>
+		<h2>References</h2>
+		<ul>
+			<li><a href="https://www.rfc-editor.org/rfc/rfc6238">RFC 6238: TOTP: Time-Based One-Time Password Algorithm</a></li>
+			<li><a href="https://www.rfc-editor.org/rfc/rfc4226">RFC 4226: HOTP: An HMAC-Based One-Time Password Algorithm</a></li>
+			<li><a href="https://www.rfc-editor.org/rfc/rfc2104">RFC 2104: HMAC: Keyed-Hashing for Message Authentication</a></li>
+			<li><a href="https://www.rfc-editor.org/rfc/rfc3174">RFC 3174: US Secure Hash Algorithm 1 (SHA1)</a></li>
+			<li><a href="https://www.rfc-editor.org/rfc/rfc4648">RFC 4648: The Base16, Base32, and Base64 Data Encodings</a></li>
+		</ul>
+	</body>
+</html>

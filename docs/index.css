@@ -1,0 +1,46 @@
+table {
+	border: 1px solid black;
+}
+
+th, td {
+	border: 1px solid black;
+	padding: 0.2em 0.4em;
+}
+
+dl {
+	margin: 0;
+}
+
+dt {
+	margin-bottom: 0.2em;
+}
+
+dd:not(:last-child) {
+	margin-bottom: 0.5em;
+}
+
+#input_TOTP_realtime {
+	margin-left: 1em;
+}
+
+#result_area {
+	font-family: monospace;
+	font-size: 300%;
+}
+
+.bytes {
+	font-family: monospace;
+	white-space: pre-wrap;
+}
+
+.hidden-element {
+	display: none;
+}
+
+#hmac_key_hash {
+	margin-bottom: 0.5em;
+}
+
+details {
+	margin-bottom: 0.5em;
+}
