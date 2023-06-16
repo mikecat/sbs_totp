@@ -200,6 +200,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		// 表示をエラーモードにする
 		nodes.error_area.classList.remove("hidden-element");
 		nodes.internal_values_area.classList.add("hidden-element");
+		nodes.digit_warning.classList.add("hidden-element");
 		nodes.result_area.textContent = "******";
 		// 桁数を取得する
 		const numDigits = parseInt(nodes.input_Digit.value);
@@ -221,6 +222,9 @@ window.addEventListener("DOMContentLoaded", function() {
 			for (let i = 0; i < numDigits; i++) data += "*";
 			return data;
 		})();
+		if (numDigits < 6) {
+			nodes.digit_warning.classList.remove("hidden-element");
+		}
 		// KをBase32デコードする
 		const K_decoded = (function(encoded) {
 			const res = [];

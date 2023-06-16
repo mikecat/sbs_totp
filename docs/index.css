@@ -44,3 +44,7 @@ dd:not(:last-child) {
 details {
 	margin-bottom: 0.5em;
 }
+
+#digit_warning {
+	margin-left: 0.5em;
+}
