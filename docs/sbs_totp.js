@@ -95,6 +95,30 @@ window.addEventListener("DOMContentLoaded", function() {
 		return elem;
 	};
 
+	// Kが設定されていなければランダムに設定する
+	if(nodes.input_K.value === "***not-initialized-c7cfc943-0a87-4037-99cd-d52ad16d88d5***") {
+		const secret = new Uint8Array(20);
+		if (crypto && crypto.getRandomValues) {
+			crypto.getRandomValues(secret);
+		} else {
+			for (let i = 0; i < secret.length; i++) {
+				secret[i] = (Math.random() * 256) >>> 0;
+			}
+		}
+		let bitBuffer = 0, bufferedBits = 0;
+		let K = "";
+		for (let i = 0; i < secret.length; i++) {
+			bitBuffer |= secret[i] << bufferedBits;
+			bufferedBits += 8;
+			while (bufferedBits >= 5) {
+				K += base32chars.charAt(bitBuffer & 0x1f);
+				bitBuffer >>>= 5;
+				bufferedBits -= 5;
+			}
+		}
+		nodes.input_K.value = K;
+	}
+
 	// TOTPのT0が設定されていなければ初期値を設定する
 	if (nodes.input_TOTP_T0.value === "") {
 		nodes.input_TOTP_T0.value = encodeDateTime(new Date(0));
