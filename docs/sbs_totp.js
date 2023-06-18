@@ -223,7 +223,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		nodes.result_type.textContent = nodes.input_TOTP.checked ? "TOTP" : "HOTP";
 		// 表示をエラーモードにする
 		nodes.error_area.classList.remove("hidden-element");
-		nodes.internal_values_area.classList.add("hidden-element");
+		nodes.intermediate_values_area.classList.add("hidden-element");
 		nodes.digit_warning.classList.add("hidden-element");
 		nodes.result_area.textContent = "******";
 		// 桁数を取得する
@@ -270,7 +270,7 @@ window.addEventListener("DOMContentLoaded", function() {
 			nodes.error_area.textContent = "The value of K is invalid.";
 			return;
 		}
-		setChild(nodes.internal_K_decode, bytesToElement(K_decoded));
+		setChild(nodes.intermediate_K_decode, bytesToElement(K_decoded));
 		// Cの値を取得する
 		if (HOTP_C_BigInt === null) {
 			nodes.error_area.textContent = "The value of C is invalid.";
@@ -289,7 +289,7 @@ window.addEventListener("DOMContentLoaded", function() {
 			nodes.error_area.textContent = "The value of C doesn't fit in 64-bit.";
 			return;
 		}
-		setChild(nodes.internal_C_bytes, bytesToElement(C_bytes));
+		setChild(nodes.intermediate_C_bytes, bytesToElement(C_bytes));
 
 		// HMAC
 		const hmac_K_raw = (function() {
@@ -326,7 +326,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		setChild(nodes.hmac_before_hash, bytesToElement(hmac_before_hash));
 		const hmac_result = sha1(hmac_before_hash);
 		setChild(nodes.hmac_result, bytesToElement(hmac_result));
-		setChild(nodes.internal_HS, bytesToElement(hmac_result));
+		setChild(nodes.intermediate_HS, bytesToElement(hmac_result));
 
 		// DT(HS)
 		const dt_offset = hmac_result[19] & 0xf;
@@ -337,10 +337,10 @@ window.addEventListener("DOMContentLoaded", function() {
 		const dt_p_last = new Uint8Array(dt_p);
 		dt_p_last[0] &= 0x7f;
 		setChild(nodes.dt_P_last, bytesToElement(dt_p_last));
-		setChild(nodes.internal_DT_HS, bytesToElement(dt_p_last));
+		setChild(nodes.intermediate_DT_HS, bytesToElement(dt_p_last));
 
 		const Snum = new DataView(dt_p_last.buffer, dt_p_last.byteOffset, dt_p_last.byteLength).getUint32(0, false);
-		nodes.internal_Snum.textContent = Snum;
+		nodes.intermediate_Snum.textContent = Snum;
 
 		const pow_Digit = (function(num) {
 			let r = 1;
@@ -348,13 +348,13 @@ window.addEventListener("DOMContentLoaded", function() {
 			return r;
 		})(numDigits > 10 ? 10 : numDigits); // 32ビットの整数は十進数で高々10桁
 		const D = Snum % pow_Digit;
-		nodes.internal_D.textContent = D;
+		nodes.intermediate_D.textContent = D;
 
 		nodes.result_area.textContent = intToStr(D, numDigits);
 
 		// 通常モードにする
 		nodes.error_area.classList.add("hidden-element");
-		nodes.internal_values_area.classList.remove("hidden-element");
+		nodes.intermediate_values_area.classList.remove("hidden-element");
 	};
 	nodes.input_K.addEventListener("input", updateHOTP);
 	nodes.input_Digit.addEventListener("input", updateHOTP);

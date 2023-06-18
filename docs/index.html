@@ -76,16 +76,16 @@
 		</table>
 		<h2><span id="result_type">TOTP</span> Code</h2>
 		<p><span id="result_area">000000</span></p>
-		<h2>Internal values</h2>
+		<h2>Intermediate values</h2>
 		<p id="error_area" class="hidden-element"></p>
-		<table id="internal_values_area">
+		<table id="intermediate_values_area">
 			<tr>
 				<td>K (Base32-decoded)</td>
-				<td id="internal_K_decode"></td>
+				<td id="intermediate_K_decode"></td>
 			</tr>
 			<tr>
 				<td>C (converted to bytes)</td>
-				<td id="internal_C_bytes"></td>
+				<td id="intermediate_C_bytes"></td>
 			</tr>
 			<tr>
 				<td>HS = HMAC-SHA-1(K,C)</td>
@@ -128,7 +128,7 @@
 							</tr>
 						</table>
 					</details>
-					<div id="internal_HS"></div>
+					<div id="intermediate_HS"></div>
 				</td>
 			</tr>
 			<tr>
@@ -155,16 +155,16 @@
 							</tr>
 						</table>
 					</details>
-					<div id="internal_DT_HS"></div>
+					<div id="intermediate_DT_HS"></div>
 				</td>
 			</tr>
 			<tr>
 				<td>Snum = StToNum(Sbits)</td>
-				<td id="internal_Snum"></td>
+				<td id="intermediate_Snum"></td>
 			</tr>
 			<tr>
 				<td>D = Snum mod 10^Digit</td>
-				<td id="internal_D"></td>
+				<td id="intermediate_D"></td>
 			</tr>
 		</table>
 		<h2>References</h2>
