@@ -101,6 +101,7 @@
 								<td>
 									<div id="hmac_key_hash">
 										(use H(K) because the input K is longer than 64 bytes)
+										<div id="hmac_key_hash_sha1_detail"></div>
 									</div>
 									<div id="hmac_key"></div>
 								</td>
@@ -119,7 +120,10 @@
 							</tr>
 							<tr>
 								<td>H(K XOR ipad, text)</td>
-								<td id="hmac_H_K_ipad_text"></td>
+								<td>
+									<div id="hmac_H_K_ipad_text_sha1_detail"></div>
+									<div id="hmac_H_K_ipad_text"></div>
+								</td>
 							</tr>
 							<tr>
 								<td>K XOR opad, H(K XOR ipad, text)</td>
@@ -127,7 +131,10 @@
 							</tr>
 							<tr>
 								<td>H(K XOR opad, H(K XOR ipad, text))</td>
-								<td id="hmac_result"></td>
+								<td>
+									<div id="hmac_result_sha1_detail"></div>
+									<div id="hmac_result"></div>
+								</td>
 							</tr>
 						</table>
 					</details>

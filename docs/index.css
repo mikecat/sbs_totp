@@ -55,3 +55,11 @@ details {
 #digit_warning {
 	margin-left: 0.5em;
 }
+
+.sha1-detail-table td {
+	font-family: monospace;
+}
+
+.sha1-detail-table td.t-column {
+	text-align: right;
+}

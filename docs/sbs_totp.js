@@ -136,6 +136,10 @@ window.addEventListener("DOMContentLoaded", function() {
 
 	// SHA-1の計算を行なう
 	const sha1 = (function() {
+		const setContentsHex = function(target, value) {
+			setContents(target, "0x" + intToStr(value, 8, 16));
+		};
+
 		const add = function(x, y) {
 			return (x + y) >>> 0;
 		};
@@ -159,7 +163,30 @@ window.addEventListener("DOMContentLoaded", function() {
 		const K = [
 			0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6,
 		];
-		return function(bytes) {
+		return function(bytes, internals) {
+			if (!internals.tbody) {
+				// 基本的な部分を生成する
+				const details = document.createElement("details");
+				internals.parent.appendChild(details);
+				const summary = document.createElement("summary");
+				summary.appendChild(document.createTextNode("SHA-1 Details"));
+				details.appendChild(summary);
+				const table = document.createElement("table");
+				details.appendChild(table);
+				const tbody = document.createElement("tbody");
+				internals.tbody = tbody;
+				table.appendChild(tbody);
+				const trPaddedInput = document.createElement("tr");
+				const tdPaddedInputTitle = document.createElement("td");
+				tdPaddedInputTitle.appendChild(document.createTextNode("input + padding"));
+				trPaddedInput.appendChild(tdPaddedInputTitle);
+				const tdPaddedInputData = document.createElement("td");
+				internals.paddedInputArea = tdPaddedInputData;
+				trPaddedInput.appendChild(tdPaddedInputData);
+				tbody.appendChild(trPaddedInput);
+				internals.roundRows = [];
+			}
+
 			const padSize = 64 - (bytes.length + 8) % 64;
 			const padBuffer = new ArrayBuffer(padSize + 8);
 			const padView = new DataView(padBuffer);
@@ -167,9 +194,87 @@ window.addEventListener("DOMContentLoaded", function() {
 			padView.setUint32(padSize, (bytes.length / (1 << 29)) >>> 0, false);
 			padView.setUint32(padSize + 4, (bytes.length & 0x1fffffff) * 8, false);
 			const data = appendUint8Array(bytes, new Uint8Array(padBuffer));
+			setContents(internals.paddedInputArea, bytesToElement(data));
 			const dataView = new DataView(data.buffer, data.byteOffset, data.byteLength);
 			const H = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0];
+			let round = 0;
 			for (let i = 0; i < data.length; i += 64) {
+				if (internals.roundRows.length <= round) {
+					const row = document.createElement("tr");
+					const rowTitle = document.createElement("td");
+					rowTitle.appendChild(document.createTextNode("process M(" + (round + 1) + ")"));
+					row.appendChild(rowTitle);
+					const rowMain = document.createElement("td");
+					row.appendChild(rowMain);
+					const rowDetails = document.createElement("details");
+					rowMain.appendChild(rowDetails);
+					const rowSummary = document.createElement("summary");
+					rowSummary.appendChild(document.createTextNode("Details"));
+					rowDetails.appendChild(rowSummary);
+					const roundDetailTable = document.createElement("table");
+					roundDetailTable.setAttribute("class", "sha1-detail-table");
+					rowDetails.appendChild(roundDetailTable);
+					const roundDetailThead = document.createElement("thead");
+					roundDetailTable.appendChild(roundDetailThead);
+					const roundDetailRow = document.createElement("tr");
+					roundDetailThead.appendChild(roundDetailRow);
+					["t", "W(t)", "A", "B", "C", "D", "E"].forEach(function(name) {
+						const th = document.createElement("th");
+						th.appendChild(document.createTextNode(name));
+						roundDetailRow.appendChild(th);
+					});
+					const roundDetailTbody = document.createElement("tbody");
+					roundDetailTable.appendChild(roundDetailTbody);
+					const roundDetailNodes = [];
+					for (let j = -1; j < 80; j++) {
+						const roundNodes = {};
+						const roundRow = document.createElement("tr");
+						roundDetailTbody.appendChild(roundRow);
+						const tColumn = document.createElement("td");
+						tColumn.setAttribute("class", "t-column");
+						tColumn.appendChild(document.createTextNode(j < 0 ? "-" : j));
+						roundRow.appendChild(tColumn);
+						["Wt", "A", "B", "C", "D", "E"].forEach(function(name) {
+							const td = document.createElement("td");
+							roundNodes[name] = td;
+							roundRow.appendChild(td);
+						});
+						if (j < 0) {
+							roundNodes["Wt"].appendChild(document.createTextNode("-"));
+							roundNodes["Wt"].setAttribute("style", "text-align: center;");
+						}
+						roundDetailNodes.push(roundNodes);
+					}
+					const hTable = document.createElement("table");
+					hTable.setAttribute("class", "sha1-detail-table");
+					rowMain.appendChild(hTable);
+					const hThead = document.createElement("thead");
+					hTable.appendChild(hThead);
+					const hHeaderRow = document.createElement("tr");
+					hThead.appendChild(hHeaderRow);
+					for (let j = 0; j < 5; j++) {
+						const th = document.createElement("th");
+						th.appendChild(document.createTextNode("H" + j));
+						hHeaderRow.appendChild(th);
+					}
+					const hTbody = document.createElement("tbody");
+					const hBodyRow = document.createElement("tr");
+					hTbody.appendChild(hBodyRow);
+					const hBodyNodes = [];
+					for (let j = 0; j < 5; j++) {
+						const td = document.createElement("td");
+						hBodyRow.appendChild(td);
+						hBodyNodes.push(td);
+					}
+					hTable.appendChild(hTbody);
+					internals.tbody.appendChild(row);
+					internals.roundRows.push({
+						"rowNode": row,
+						"roundDetailNodes": roundDetailNodes,
+						"hNodes": hBodyNodes,
+					});
+				}
+
 				const W = [];
 				for (let j = 0; j < 16; j++) {
 					W.push(dataView.getUint32(i + 4 * j, false));
@@ -178,6 +283,12 @@ window.addEventListener("DOMContentLoaded", function() {
 					W.push(S(1, W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]));
 				}
 				let A = H[0], B = H[1], C = H[2], D = H[3], E = H[4];
+				internals.roundRows[round].rowNode.classList.remove("hidden-element");
+				setContentsHex(internals.roundRows[round].roundDetailNodes[0].A, A);
+				setContentsHex(internals.roundRows[round].roundDetailNodes[0].B, B);
+				setContentsHex(internals.roundRows[round].roundDetailNodes[0].C, C);
+				setContentsHex(internals.roundRows[round].roundDetailNodes[0].D, D);
+				setContentsHex(internals.roundRows[round].roundDetailNodes[0].E, E);
 				for (let t = 0; t < 80; t++) {
 					const TEMP = (S(5, A) + f[(t / 20) >>> 0](B, C, D) + E + W[t] + K[(t / 20) >>> 0]) >>> 0;
 					E = D;
@@ -185,12 +296,25 @@ window.addEventListener("DOMContentLoaded", function() {
 					C = S(30, B);
 					B = A;
 					A = TEMP;
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].Wt, W[t]);
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].A, A);
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].B, B);
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].C, C);
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].D, D);
+					setContentsHex(internals.roundRows[round].roundDetailNodes[t + 1].E, E);
 				}
 				H[0] = add(H[0], A);
 				H[1] = add(H[1], B);
 				H[2] = add(H[2], C);
 				H[3] = add(H[3], D);
 				H[4] = add(H[4], E);
+				for (let j = 0; j < 5; j++) {
+					setContentsHex(internals.roundRows[round].hNodes[j], H[j]);
+				}
+				round++;
+			}
+			for (; round < internals.roundRows.length; round++) {
+				internals.roundRows[round].rowNode.classList.add("hidden-element");
 			}
 			const hashBuffer = new ArrayBuffer(20);
 			const hashView = new DataView(hashBuffer);
@@ -202,6 +326,11 @@ window.addEventListener("DOMContentLoaded", function() {
 	})();
 
 	// HOTP/TOTPの処理を行う
+	const sha1Cache = {
+		"hmac_key_hash": {"parent": nodes.hmac_key_hash_sha1_detail},
+		"hmac_H_K_ipad_text": {"parent": nodes.hmac_H_K_ipad_text_sha1_detail},
+		"hmac_result": {"parent": nodes.hmac_result_sha1_detail},
+	};
 	const updateHOTP = function() {
 		// TOTPのTを計算する
 		const TOTP_T = (function() {
@@ -313,7 +442,7 @@ window.addEventListener("DOMContentLoaded", function() {
 				return K_decoded;
 			} else {
 				nodes.hmac_key_hash.classList.remove("hidden-element");
-				return sha1(K_decoded);
+				return sha1(K_decoded, sha1Cache.hmac_key_hash);
 			}
 		})();
 		setContents(nodes.hmac_key, bytesToElement(hmac_K_raw));
@@ -335,11 +464,11 @@ window.addEventListener("DOMContentLoaded", function() {
 			return res;
 		})());
 		setContents(nodes.hmac_K_opad, bytesToElement(hmac_K_opad));
-		const hmac_H_K_ipad_text = sha1(hmac_K_ipad_text);
+		const hmac_H_K_ipad_text = sha1(hmac_K_ipad_text, sha1Cache.hmac_H_K_ipad_text);
 		setContents(nodes.hmac_H_K_ipad_text, bytesToElement(hmac_H_K_ipad_text));
 		const hmac_before_hash = appendUint8Array(hmac_K_opad, hmac_H_K_ipad_text);
 		setContents(nodes.hmac_before_hash, bytesToElement(hmac_before_hash));
-		const hmac_result = sha1(hmac_before_hash);
+		const hmac_result = sha1(hmac_before_hash, sha1Cache.hmac_result);
 		setContents(nodes.hmac_result, bytesToElement(hmac_result));
 		setContents(nodes.intermediate_HS, bytesToElement(hmac_result));
 
